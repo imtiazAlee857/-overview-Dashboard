@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>CEO Dashboard | Grocery &amp; Fresho</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --ink:#0b1220;
+  --gold:#c89a3a;
+  --gold-deep:#9c7820;
+  --gold-pale:#fdf3d8;
+  --good:#0f7a4d;
+  --bad:#be123c;
+  --warn:#c2540a;
+  --muted:#64748b;
+  --bg:#0e1626;
+  --card:#ffffff;
+  --card2:#f7f8fb;
+  --border:#e2e6ee;
+  --sans:'Inter',sans-serif;
+}
+
+html{-webkit-text-size-adjust:100%;}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  min-height:100vh;
+  color:var(--ink);
+  padding-bottom:36px;
+  overflow-x:hidden;
+}
+
+.icon{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0;}
+
+/* -- STICKY TOP (header + controls + dropdown) -- */
+.top-fixed{position:sticky;top:0;z-index:100;}
+
+/* -- TOP HEADER -- */
+.app-header{
+  background:linear-gradient(135deg,#0b1220 0%,#1c2a44 100%);
+  padding:16px 16px 14px;
+  border-bottom:1px solid #243049;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.header-brand{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.header-brand h1{font-size:15px;font-weight:800;color:#f3f1e8;letter-spacing:-.2px;}
+.header-brand span{font-size:10px;font-weight:700;color:var(--gold);letter-spacing:1.2px;text-transform:uppercase;}
+.header-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.refresh-btn{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(200,154,58,.15);border:1px solid var(--gold-deep);
+  color:var(--gold);font-size:11px;font-weight:800;padding:8px 13px;
+  border-radius:9px;cursor:pointer;letter-spacing:.3px;text-transform:uppercase;
+  font-family:var(--sans);
+}
+.refresh-btn .icon{width:13px;height:13px;}
+.refresh-btn:active{background:rgba(200,154,58,.3);}
+.last-updated{font-size:10px;color:rgba(200,154,58,.7);font-weight:600;margin-top:3px;}
+
+/* -- CONTROL BAR (branch / month dropdown buttons) -- */
+.control-bar{
+  position:relative;
+  display:flex; gap:8px; padding:10px 14px 12px;
+  background:linear-gradient(180deg,#111d30,#0e1626);
+  border-bottom:1px solid #1e2f46;
+}
+.control-btn{
+  flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between;
+  gap:8px; padding:11px 13px; border-radius:12px; border:1.5px solid #2a3a55;
+  background:rgba(255,255,255,.04); color:#dde4f0; font-weight:700; font-size:13px;
+  font-family:var(--sans); cursor:pointer; transition:.15s;
+}
+.control-btn:active{background:rgba(255,255,255,.09);transform:scale(.99);}
+.control-btn.open{border-color:var(--gold-deep);background:rgba(200,154,58,.12);}
+.control-btn .cb-left{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;}
+.control-btn .cb-left .cb-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.control-btn .cb-icon{color:var(--gold);}
+.control-btn .cb-chevron{color:#8a9ab8;transition:transform .2s;}
+.control-btn.open .cb-chevron{transform:rotate(180deg);}
+
+/* -- DROPDOWN PANEL -- */
+.dropdown-backdrop{
+  position:fixed;inset:0;z-index:99;background:rgba(5,9,18,.55);
+  opacity:0;visibility:hidden;transition:opacity .2s;
+}
+.dropdown-backdrop.show{opacity:1;visibility:visible;}
+.dropdown-panel{
+  position:absolute;top:100%;left:14px;right:14px;z-index:10;
+  background:#101a2d;border:1px solid #243049;border-radius:16px;
+  box-shadow:0 24px 48px -12px rgba(0,0,0,.55);
+  max-height:62vh;overflow-y:auto;
+  opacity:0;transform:translateY(-8px) scale(.97);pointer-events:none;
+  transition:opacity .18s,transform .18s;
+}
+.dropdown-panel.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+.dd-list{padding:6px;}
+.dd-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px 12px;border-radius:10px;color:#dde4f0;font-weight:700;
+  font-size:14px;cursor:pointer;
+}
+.dd-item:active{background:rgba(255,255,255,.07);}
+.dd-item.active{background:linear-gradient(180deg,var(--gold),var(--gold-deep));color:#241a06;}
+.dd-item .dd-left{display:flex;align-items:center;gap:11px;}
+.dd-item .dd-icon{color:#8a9ab8;}
+.dd-item.active .dd-icon{color:#241a06;}
+.dd-check{color:#241a06;opacity:0;}
+.dd-item.active .dd-check{opacity:1;}
+.dd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px;}
+.dd-grid .dd-item{flex-direction:column;gap:1px;padding:11px 4px;text-align:center;font-size:12.5px;justify-content:center;}
+.dd-grid .dd-item.full{grid-column:1/-1;flex-direction:row;justify-content:center;font-size:13.5px;margin-bottom:2px;}
+
+/* -- MAIN CONTENT -- */
+.main-content{padding:14px 14px 0;}
+.main-content.fade-in{animation:fadeSlide .28s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* -- SUMMARY STRIP (KPI row) -- */
+.kpi-row{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;
+}
+.kpi-card{
+  background:var(--card); border-radius:12px; padding:13px 8px 11px;
+  text-align:center; border:1.5px solid var(--border);
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.kpi-card .kpi-icon{color:var(--muted);opacity:.55;margin-bottom:5px;}
+.kpi-card .kpi-icon .icon{width:15px;height:15px;}
+.kpi-card .kpi-val{font-size:25px;font-weight:900;color:var(--ink);line-height:1;}
+.kpi-card .kpi-lbl{font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:4px;}
+.kpi-card.red .kpi-val{color:var(--bad);}
+.kpi-card.red .kpi-icon{color:var(--bad);}
+.kpi-card.green .kpi-val{color:var(--good);}
+.kpi-card.green .kpi-icon{color:var(--good);}
+.kpi-card.amber .kpi-val{color:var(--warn);}
+.kpi-card.amber .kpi-icon{color:var(--warn);}
+
+/* -- ALERT BANNER -- */
+.alert-banner{
+  border-radius:12px; padding:12px 14px; margin-bottom:14px;
+  font-size:13px; font-weight:700; line-height:1.5;
+  display:flex; align-items:flex-start; gap:10px;
+}
+.alert-banner.red{background:#fde8ec;color:#7f1d1d;border:1.5px solid #fca5a5;}
+.alert-banner.amber{background:#fff7ed;color:#78350f;border:1.5px solid #fed7aa;}
+.alert-banner.green{background:#ecfdf5;color:#064e3b;border:1.5px solid #6ee7b7;}
+.alert-icon{flex-shrink:0;margin-top:1px;}
+.alert-icon .icon{width:19px;height:19px;}
+
+/* -- SECTION HEADER -- */
+.section-header{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:10px; margin-top:4px;
+}
+.section-title{
+  font-size:13px; font-weight:800; color:#dde4f0; text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.section-count{
+  font-size:11px; font-weight:700; color:var(--gold); background:rgba(200,154,58,.15);
+  padding:3px 9px; border-radius:50px;
+}
+
+/* -- CATEGORY CARDS -- */
+.cat-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+.cat-card{
+  background:var(--card); border-radius:14px; overflow:hidden;
+  box-shadow:0 3px 12px rgba(0,0,0,.08); border:1.5px solid var(--border);
+  border-left:4px solid transparent;
+  cursor:pointer; transition:transform .12s;
+}
+.cat-card:active{transform:scale(.99);}
+.cat-card-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; gap:10px;
+}
+.cat-card-head .cat-icon-name{display:flex;align-items:center;gap:10px;min-width:0;}
+.cat-icon{
+  width:38px; height:38px; border-radius:10px; display:flex;
+  align-items:center; justify-content:center; flex-shrink:0;
+}
+.cat-icon .icon{width:19px;height:19px;}
+.cat-name{font-size:14px; font-weight:800; color:var(--ink);}
+.cat-sub-row{display:flex;align-items:center;gap:3px;margin-top:2px;}
+.cat-sub{font-size:11px; font-weight:600; color:var(--muted);}
+.cat-chevron{color:var(--muted);transition:transform .25s;}
+.cat-chevron .icon{width:13px;height:13px;}
+.cat-card.expanded .cat-chevron{transform:rotate(180deg);}
+.cat-count-wrap{text-align:right;flex-shrink:0;}
+.cat-count{font-size:32px; font-weight:900; line-height:1;}
+.cat-count-lbl{font-size:9.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px;}
+.cat-bar{height:4px; background:var(--border);}
+.cat-bar-fill{height:100%;border-radius:0;transition:width .4s ease;}
+
+/* expand/collapse */
+.cat-body{max-height:0;overflow:hidden;transition:max-height .3s ease;border-top:0 solid transparent;}
+.cat-card.expanded .cat-body{border-top:1.5px solid var(--border);}
+.complaint-list{padding:0 14px 12px;}
+.complaint-row{
+  padding:10px 0; border-bottom:1px solid #eef1f7;
+  display:flex; align-items:flex-start; gap:10px;
+}
+.complaint-row:last-child{border-bottom:none;}
+.complaint-date{
+  flex-shrink:0; background:#eef1f7; color:#334155; font-size:10px;
+  font-weight:700; padding:3px 7px; border-radius:5px; white-space:nowrap;
+  font-family:monospace; margin-top:2px;
+}
+.complaint-info{flex:1;min-width:0;}
+.complaint-product{font-size:13.5px;font-weight:800;color:var(--ink);}
+.complaint-reason{font-size:12px;font-weight:600;color:var(--muted);margin-top:2px;line-height:1.4;}
+.complaint-qty{
+  flex-shrink:0; font-size:18px; font-weight:900;
+  width:32px; text-align:center; margin-top:2px;
+}
+
+/* -- OVERVIEW PANEL (all branches) -- */
+.overview-branch-card{
+  background:var(--card); border-radius:14px; overflow:hidden;
+  box-shadow:0 3px 12px rgba(0,0,0,.08); border:1.5px solid var(--border);
+  border-top:3px solid transparent;
+  margin-bottom:12px;
+}
+.ovb-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; gap:10px; flex-wrap:wrap;
+}
+.ovb-head h3{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:800;color:var(--ink);}
+.ovb-head h3 .icon{width:16px;height:16px;color:var(--gold-deep);}
+.ovb-total-badge{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 12px; border-radius:50px; font-size:12px; font-weight:800;
+  letter-spacing:.3px;
+}
+.ovb-total-badge .icon{width:13px;height:13px;}
+.ovb-cats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;}
+.ovb-cat{
+  display:flex;flex-direction:column;align-items:center;padding:12px 6px;
+  border-top:1.5px solid var(--border); border-right:1px solid var(--border);
+}
+.ovb-cat:nth-child(3n){border-right:none;}
+.ovb-cat-icon{margin-bottom:4px;}
+.ovb-cat-icon .icon{width:15px;height:15px;}
+.ovb-cat-val{font-size:18px;font-weight:900;}
+.ovb-cat-lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;text-align:center;}
+.ovb-empty{padding:12px 16px;font-size:12px;color:var(--muted);font-weight:600;border-top:1.5px solid var(--border);}
+
+/* -- FB STATUS -- */
+.fb-status-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.fb-card{
+  background:var(--card);border-radius:14px;padding:14px;
+  border:1.5px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.fb-card h3{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:var(--ink);margin-bottom:10px;}
+.fb-card h3 .icon{width:14px;height:14px;color:var(--gold-deep);}
+.fb-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #eef1f7;font-size:12px;}
+.fb-row:last-of-type{border-bottom:none;}
+.fb-row .fb-date{font-weight:600;color:var(--muted);}
+.fb-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px;}
+.fb-badge .icon{width:10px;height:10px;}
+.fb-badge.up{background:#d6f3e3;color:#0f7a4d;}
+.fb-badge.down{background:#fde8ec;color:#be123c;}
+.fb-empty{padding:8px 0;color:var(--muted);font-size:12px;font-weight:600;}
+
+/* -- EMPTY STATE -- */
+.empty-state{
+  text-align:center;padding:36px 20px;color:var(--muted);
+  font-size:13px;font-weight:700;
+}
+.empty-state .big{margin-bottom:10px;color:#c3cad8;}
+.empty-state .big .icon{width:42px;height:42px;}
+
+/* -- RESPONSIVE -- */
+@media(max-width:380px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .kpi-card .kpi-val{font-size:22px;}
+  .control-btn{font-size:12px;padding:10px 10px;}
+  .dd-grid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="top-fixed">
+  <!-- HEADER -->
+  <div class="app-header">
+    <div class="header-brand">
+      <h1>CEO Dashboard</h1>
+      <span>Grocery &amp; Fresho Operations</span>
+      <div class="last-updated" id="lastUpdated">Loading...</div>
+    </div>
+    <div class="header-right">
+      <button class="refresh-btn" onclick="location.reload()">
+        <span class="icon" id="iconRefresh"></span>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTROL BAR: branch + month dropdown buttons -->
+  <div class="control-bar">
+    <button class="control-btn" id="branchBtn" onclick="openDropdown('branch')">
+      <span class="cb-left">
+        <span class="icon cb-icon" id="iconBranchBtn"></span>
+        <span class="cb-label" id="branchBtnLabel">Overview</span>
+      </span>
+      <span class="icon cb-chevron" id="chevronBranch"></span>
+    </button>
+    <button class="control-btn" id="monthBtn" onclick="openDropdown('month')">
+      <span class="cb-left">
+        <span class="icon cb-icon" id="iconMonthBtn"></span>
+        <span class="cb-label" id="monthBtnLabel">All Time</span>
+      </span>
+      <span class="icon cb-chevron" id="chevronMonth"></span>
+    </button>
+  </div>
+
+  <div class="dropdown-panel" id="ddPanel"></div>
+</div>
+
+<div class="dropdown-backdrop" id="ddBackdrop" onclick="closeDropdown()"></div>
+
+<!-- MAIN CONTENT AREA -->
+<div class="main-content" id="mainContent"></div>
+
+<script>
+
+/* ============================================================
+   ICON SYSTEM (inline SVG, no emoji/glyphs)
+   ============================================================ */
+const ICONS = {
+  refresh: '<path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 4v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 20v-5h5"/>',
+  chevronDown: '<polyline points="6 9 12 15 18 9"/>',
+  check: '<polyline points="5 13 10 18 19 7"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  store: '<path d="M3 9.5 4.5 4h15L21 9.5"/><path d="M4 9.5V20h16V9.5"/><path d="M9.5 20v-6.5h5V20"/>',
+  upload: '<path d="M12 16V7"/><path d="M8.5 10.5 12 7l3.5 3.5"/><path d="M6.5 19a4 4 0 0 1-.9-7.9 5 5 0 0 1 9.6-2A4.2 4.2 0 0 1 17.5 19h-11z"/>',
+  leaf: '<path d="M6 20.5C16 20.5 19 14 19 5c-9 0-13.5 4-13.5 12.5"/><path d="M5.5 19c3-3.5 6-6.5 11-10"/>',
+  basket: '<path d="M5 9.5h14L17.3 20H6.7L5 9.5z"/><path d="M9 9.5V7a3 3 0 0 1 6 0v2.5"/>',
+  users: '<circle cx="9" cy="8" r="3"/><path d="M3.5 20v-1.5A4.5 4.5 0 0 1 8 14h2a4.5 4.5 0 0 1 4.5 4.5V20"/><circle cx="17" cy="9" r="2.3"/><path d="M16 14.2a4 4 0 0 1 4.5 4V20"/>',
+  heart: '<path d="M12 20s-7.5-4.6-9.8-9.2A5 5 0 0 1 12 6a5 5 0 0 1 9.8 4.8C19.5 15.4 12 20 12 20z"/>',
+  alertTriangle: '<path d="M12 3 2.5 20h19L12 3z"/><line x1="12" y1="10" x2="12" y2="14.5"/><circle cx="12" cy="17.3" r=".4" fill="currentColor" stroke="none"/>',
+  wrench: '<path d="M14.5 6.5a3.5 3.5 0 1 0-4.9 4.9L4 17l3 3 5.6-5.6a3.5 3.5 0 0 0 4.9-4.9L15 12l-2-2 2.5-2.5z"/>',
+  receipt: '<path d="M6.5 3h11v18l-2-1.4L13.5 21l-1.5-1.4L10.5 21 9 19.6 7 21V3z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/>',
+  tag: '<path d="M3 11V4h7l10 10-7 7L3 11z"/><circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" stroke="none"/>',
+  box: '<path d="M21 7.5 12 12 3 7.5 12 3l9 4.5z"/><path d="M3 7.5V17l9 4.5 9-4.5V7.5"/><line x1="12" y1="12" x2="12" y2="21.5"/>',
+  barChart: '<line x1="6" y1="20" x2="6" y2="11"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="14"/>',
+  alertOctagon: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="7.5" x2="12" y2="13"/><circle cx="12" cy="16.2" r=".4" fill="currentColor" stroke="none"/>',
+  alertCircle: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.2" r=".4" fill="currentColor" stroke="none"/>',
+  checkCircle: '<circle cx="12" cy="12" r="9"/><path d="M8 12.3 10.5 15 16 9"/>',
+  calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="6.5"/><line x1="16" y1="3" x2="16" y2="6.5"/>',
+  inbox: '<path d="M4 12h4.2l1.6 2.6h4.4l1.6-2.6H20"/><path d="M5.5 12 4 5.5h16L18.5 12"/><path d="M5.5 12 4.5 19h15l-1-7"/>'
+};
+
+function svgIcon(name) {
+  const p = ICONS[name] || '';
+  return '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
+}
+
+/* ============================================================
+   BAKED DATA -- paste updated snapshot here
+   ============================================================ */
+window.__BAKED_BRANCH_DATA__ = {"tab1": {"monthly": [], "major": [], "demand": [], "price": [], "cust": [{"date": "01/06/2026", "product": "Customer", "qty": 1, "reason": "Unsatisfied"}, {"date": "06/06/2026", "product": "Customer", "qty": 2, "reason": "Unsatisfied"}, {"date": "11/06/2026", "product": "Customer", "qty": 1, "reason": "Unsatisfied"}, {"date": "15/06/2026", "product": "Customer", "qty": 2, "reason": "Unsatisfied"}, {"date": "17/06/2026", "product": "Customer", "qty": 1, "reason": "Unsatisfied"}, {"date": "24/06/2026", "product": "Customer", "qty": 2, "reason": "Unsatisfied"}, {"date": "25/06/2026", "product": "Customer", "qty": 2, "reason": "Unsatisfied"}], "staff": [{"date": "05/06/2026", "product": "Staff", "qty": 1, "reason": "Needed training"}, {"date": "05/06/2026", "product": "Staff", "qty": 2, "reason": "Guidelines nahi de pata"}, {"date": "07/06/2026", "product": "Staff", "qty": 1, "reason": "Needed training"}, {"date": "07/06/2026", "product": "Staff", "qty": 2, "reason": "Guidelines nahi de pata"}, {"date": "08/06/2026", "product": "Staff", "qty": 1, "reason": "Needed training"}, {"date": "08/06/2026", "product": "Staff", "qty": 2, "reason": "Guidelines nahi de pata"}, {"date": "12/06/2026", "product": "Staff", "qty": 1, "reason": "Needed training"}, {"date": "12/06/2026", "product": "Staff", "qty": 2, "reason": "Guidelines nahi de pata"}, {"date": "13/06/2026", "product": "Staff", "qty": 1, "reason": "Cooperative nahi hai"}, {"date": "14/06/2026", "product": "Management", "qty": 1, "reason": "Sahi nahi hai"}, {"date": "14/06/2026", "product": "Staff", "qty": 1, "reason": "Cooperative nhi hai"}, {"date": "24/06/2026", "product": "Basket", "qty": 1, "reason": "Wash karwi"}, {"date": "24/06/2026", "product": "Counters side", "qty": 1, "reason": "Till paker rakhen"}, {"date": "24/06/2026", "product": "Staff", "qty": 1, "reason": "Need tanning"}, {"date": "24/06/2026", "product": "Billing manager", "qty": 1, "reason": "Misbehave keya"}, {"date": "24/06/2026", "product": "Csm counter", "qty": 1, "reason": "Koi mojod nahi tha"}, {"date": "24/06/2026", "product": "Counter side", "qty": 1, "reason": "Slow process"}], "grocery": [{"date": "05/06/2026", "product": "Besan", "qty": 1, "reason": "Khrab tha"}, {"date": "05/06/2026", "product": "Maxb rice", "qty": 1, "reason": "Kerry hai khrab he"}, {"date": "06/06/2026", "product": "Chole", "qty": 1, "reason": "Khrab hai ousme kerry hai"}, {"date": "07/06/2026", "product": "Besan", "qty": 1, "reason": "Khrab tha"}, {"date": "07/06/2026", "product": "Maxb rice", "qty": 1, "reason": "Kerry hai khrab he"}, {"date": "08/06/2026", "product": "Besan", "qty": 1, "reason": "Khrab tha"}, {"date": "08/06/2026", "product": "Maxb rice", "qty": 1, "reason": "Kerry hai khrab he"}, {"date": "12/06/2026", "product": "Besan", "qty": 1, "reason": "Khrab tha"}, {"date": "12/06/2026", "product": "Maxb rice", "qty": 1, "reason": "Kerry hai khrab he"}, {"date": "18/06/2026", "product": "Grocery", "qty": 1, "reason": "Expensive hai"}, {"date": "20/06/2026", "product": "Grocery", "qty": 1, "reason": "Price expansive hai"}, {"date": "21/06/2026", "product": "Maxb rice sela", "qty": 1, "reason": "Price expansive hai"}, {"date": "21/06/2026", "product": "Maxb rice", "qty": 1, "reason": "Price expansive"}, {"date": "21/06/2026", "product": "Gandum 500g", "qty": 1, "reason": "Rakhen"}, {"date": "24/06/2026", "product": "Eggs", "qty": 1, "reason": "Size choti the"}, {"date": "24/06/2026", "product": "Cheeni packing", "qty": 1, "reason": "Sahi nai hai"}], "fresho": [{"date": "01/06/2026", "product": "Vegetables", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "01/06/2026", "product": "Tomatoes", "qty": 1, "reason": "Khrab he"}, {"date": "01/06/2026", "product": "Hari mirch", "qty": 1, "reason": "Khrab hai"}, {"date": "01/06/2026", "product": "Piaz", "qty": 1, "reason": "Price tag issue"}, {"date": "01/06/2026", "product": "Vegetables & fruits", "qty": 1, "reason": "Price bhair se expensive hai"}, {"date": "01/06/2026", "product": "Vegetables side", "qty": 1, "reason": "Stock availability issue"}, {"date": "01/06/2026", "product": "Vegetables price", "qty": 1, "reason": "Expensive howi hai"}, {"date": "01/06/2026", "product": "Vegetables section", "qty": 1, "reason": "Stock km hai"}, {"date": "01/06/2026", "product": "Mango langra", "qty": 1, "reason": "Price dif rs20"}, {"date": "01/06/2026", "product": "Vegetables or fruits", "qty": 1, "reason": "Fresh nahi tha"}, {"date": "02/06/2026", "product": "Vegetable", "qty": 4, "reason": "Quality not good"}, {"date": "02/06/2026", "product": "Vegetable", "qty": 1, "reason": "Late isse"}, {"date": "02/06/2026", "product": "Fruit", "qty": 1, "reason": "Quality not good"}, {"date": "02/06/2026", "product": "Vegetables", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "02/06/2026", "product": "Podina", "qty": 1, "reason": "Fresh nahi bahi"}, {"date": "02/06/2026", "product": "Egg", "qty": 1, "reason": "Cover quality not good"}, {"date": "03/06/2026", "product": "Vegetables", "qty": 1, "reason": "Expensive the"}, {"date": "03/06/2026", "product": "Eggs", "qty": 1, "reason": "Expensive hai"}, {"date": "03/06/2026", "product": "Vegetables & fruits", "qty": 1, "reason": "Subha late aate hai"}, {"date": "04/06/2026", "product": "Vegetables", "qty": 1, "reason": "Expensive the"}, {"date": "04/06/2026", "product": "Eggs", "qty": 1, "reason": "Expensive hai"}, {"date": "04/06/2026", "product": "Vegetables & fruits", "qty": 1, "reason": "Subha late aate hai"}, {"date": "05/06/2026", "product": "Vegetables", "qty": 1, "reason": "Price km karen"}, {"date": "05/06/2026", "product": "Fruits", "qty": 1, "reason": "Price km karen"}, {"date": "05/06/2026", "product": "Vegetables", "qty": 1, "reason": "Complete nahi hote"}, {"date": "06/06/2026", "product": "Vegetables", "qty": 1, "reason": "Achi nahi hai"}, {"date": "06/06/2026", "product": "Vegetables", "qty": 1, "reason": "Thore expensive hai"}, {"date": "06/06/2026", "product": "Eggs", "qty": 1, "reason": "Quility achi nahi hai"}, {"date": "07/06/2026", "product": "Vegetables", "qty": 1, "reason": "Price km karen"}, {"date": "07/06/2026", "product": "Fruits", "qty": 1, "reason": "Price km karen"}, {"date": "07/06/2026", "product": "Vegetables", "qty": 1, "reason": "Complete nahi hote"}, {"date": "08/06/2026", "product": "Vegetables", "qty": 1, "reason": "Price km karen"}, {"date": "08/06/2026", "product": "Fruits", "qty": 1, "reason": "Price km karen"}, {"date": "08/06/2026", "product": "Vegetables", "qty": 1, "reason": "Complete nahi hote"}, {"date": "09/06/2026", "product": "Mirchi", "qty": 1, "reason": "Quility improve karen"}, {"date": "09/06/2026", "product": "Fruits section", "qty": 1, "reason": "Ground floor pe karen b1 or b2 ki tarha"}, {"date": "09/06/2026", "product": "Vegetables", "qty": 1, "reason": "Price thore expensive hai"}, {"date": "09/06/2026", "product": "Stock", "qty": 1, "reason": "Complete nahi hai"}, {"date": "10/06/2026", "product": "Vegetables & fruits", "qty": 1, "reason": "Section improve karen"}, {"date": "10/06/2026", "product": "Vegetables", "qty": 1, "reason": "Kuch products expensive hai"}, {"date": "10/06/2026", "product": "Vegetables or fruits", "qty": 1, "reason": "Verity km hai b1 se"}, {"date": "11/06/2026", "product": "Vegetables", "qty": 1, "reason": "Expensive the"}, {"date": "11/06/2026", "product": "Eggs", "qty": 1, "reason": "Expensive hai"}, {"date": "11/06/2026", "product": "Vegetables & fruits", "qty": 1, "reason": "Subha late aate hai"}, {"date": "12/06/2026", "product": "Vegetables", "qty": 1, "reason": "Price km karen"}, {"date": "12/06/2026", "product": "Fruits", "qty": 1, "reason": "Price km karen"}, {"date": "12/06/2026", "product": "Vegetables", "qty": 1, "reason": "Complete nahi hote"}, {"date": "13/06/2026", "product": "Vegetables ke hawaly se", "qty": 1, "reason": "Kuch sekhna chahey"}, {"date": "13/06/2026", "product": "Vegetables", "qty": 2, "reason": "Fresh nahi hai"}, {"date": "13/06/2026", "product": "Vegetables", "qty": 1, "reason": "Basi the"}, {"date": "13/06/2026", "product": "Vegetables or fruits", "qty": 1, "reason": "Complete nahi hote"}, {"date": "13/06/2026", "product": "Mango sindhri", "qty": 1, "reason": "Fresh nahi tha"}, {"date": "13/06/2026", "product": "Vegetables", "qty": 1, "reason": "Basi lag rahe hai"}, {"date": "13/06/2026", "product": "Vegetables", "qty": 1, "reason": "Expensive hai"}, {"date": "13/06/2026", "product": "Tomatoes", "qty": 1, "reason": "Expensive hai"}, {"date": "13/06/2026", "product": "Piaz", "qty": 1, "reason": "Expensive hai"}, {"date": "13/06/2026", "product": "Hari mirch", "qty": 1, "reason": "Large size rakhen"}, {"date": "13/06/2026", "product": "Bhindi", "qty": 1, "reason": "Quility sahi nahi hai"}, {"date": "13/06/2026", "product": "Vegetables", "qty": 1, "reason": "Complete nahi hai"}, {"date": "14/06/2026", "product": "Vegetables", "qty": 4, "reason": "Expensive hai"}, {"date": "14/06/2026", "product": "Hara dhaniya", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "14/06/2026", "product": "Phodina", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "14/06/2026", "product": "Palak", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "14/06/2026", "product": "Fruits", "qty": 1, "reason": "Verity increase karen"}, {"date": "14/06/2026", "product": "Vegetables", "qty": 1, "reason": "Quility improve karen"}, {"date": "14/06/2026", "product": "Mangos", "qty": 1, "reason": "Bhot khrab hai"}, {"date": "14/06/2026", "product": "Prices", "qty": 1, "reason": "Expensive hai"}, {"date": "14/06/2026", "product": "Fruits", "qty": 1, "reason": "Expensive hai"}, {"date": "15/06/2026", "product": "Vegetables", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "15/06/2026", "product": "Vegetables", "qty": 1, "reason": "Fresh nhi hai"}, {"date": "15/06/2026", "product": "Mango sindhri", "qty": 1, "reason": "Quility achi nahi hai"}, {"date": "15/06/2026", "product": "Vegetables", "qty": 1, "reason": "Expensive hai"}, {"date": "15/06/2026", "product": "Mango", "qty": 1, "reason": "Price km karen"}, {"date": "15/06/2026", "product": "Vegetables", "qty": 1, "reason": "Quility improve karen"}, {"date": "15/06/2026", "product": "Vegetables or fruits", "qty": 1, "reason": "Sahi nahi laga"}, {"date": "16/06/2026", "product": "Tomatoes", "qty": 2, "reason": "Price tag issue"}, {"date": "16/06/2026", "product": "Tomatoes", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "16/06/2026", "product": "Hari mirch", "qty": 1, "reason": "Fresh rakhen"}, {"date": "16/06/2026", "product": "Tomatoes", "qty": 1, "reason": "Sahi nai hai"}, {"date": "17/06/2026", "product": "Vegetables", "qty": 1, "reason": "Expensive hai"}, {"date": "17/06/2026", "product": "Vegetables or fruits", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "18/06/2026", "product": "Vegetables", "qty": 1, "reason": "Expensive hai"}, {"date": "18/06/2026", "product": "Tomatoes", "qty": 1, "reason": "Expensive hai"}, {"date": "18/06/2026", "product": "Mango", "qty": 1, "reason": "Missing tha"}, {"date": "18/06/2026", "product": "Tomatoes", "qty": 1, "reason": "Quility achi nahi hai"}, {"date": "18/06/2026", "product": "Vegetables fresh rakhen", "qty": 1, "reason": "General issue"}, {"date": "20/06/2026", "product": "Vegetables", "qty": 1, "reason": "Sahi nahi hai"}, {"date": "20/06/2026", "product": "Tomatoes", "qty": 1, "reason": "Khrab thy"}, {"date": "20/06/2026", "product": "Alo", "qty": 1, "reason": "Khrab thy"}, {"date": "20/06/2026", "product": "Piaz", "qty": 1, "reason": "Kharb the"}, {"date": "20/06/2026", "product": "Kharboza", "qty": 1, "reason": "Bulkul khrab hai"}, {"date": "20/06/2026", "product": "Bara nimbu", "qty": 1, "reason": "Sahi nahi hai"}, {"date": "20/06/2026", "product": "Alo lal", "qty": 1, "reason": "Unavailble"}, {"date": "20/06/2026", "product": "Turi", "qty": 1, "reason": "Sahi nahi hai"}, {"date": "20/06/2026", "product": "Vegetables", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "20/06/2026", "product": "Vegetables", "qty": 1, "reason": "Late aate hai"}, {"date": "20/06/2026", "product": "Chico", "qty": 1, "reason": "Price bhair se price same hai"}, {"date": "21/06/2026", "product": "Vegetables", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "21/06/2026", "product": "Bhindi", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "21/06/2026", "product": "Prices", "qty": 1, "reason": "Expansive bahir se"}, {"date": "21/06/2026", "product": "Tomatoes", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "21/06/2026", "product": "Vegetables", "qty": 1, "reason": "Sahi nahi hai"}, {"date": "21/06/2026", "product": "Fruits", "qty": 1, "reason": "Sahi nahi hai"}, {"date": "21/06/2026", "product": "Turi", "qty": 1, "reason": "Sahi nahi hai"}, {"date": "21/06/2026", "product": "Vegetables", "qty": 1, "reason": "Quility achi rakhen"}, {"date": "21/06/2026", "product": "Fruits", "qty": 1, "reason": "Verity achi rakhen"}, {"date": "24/06/2026", "product": "Aro", "qty": 1, "reason": "Price tag issue"}, {"date": "24/06/2026", "product": "Alo", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "24/06/2026", "product": "Chukandar", "qty": 1, "reason": "Fresh nahi hai"}, {"date": "24/06/2026", "product": "Alo", "qty": 1, "reason": "Quility sahi karwai"}, {"date": "24/06/2026", "product": "Desi kheera", "qty": 1, "reason": "Price tag issue"}, {"date": "24/06/2026", "product": "Fruits or vegetables", "qty": 1, "reason": "Bhair se expensive hai"}, {"date": "24/06/2026", "product": "Fruits", "qty": 1, "reason": "Expensive hai"}, {"date": "24/06/2026", "product": "Jamun", "qty": 1, "reason": "Expensive hai"}, {"date": "25/06/2026", "product": "Vegetables", "qty": 1, "reason": "Expensive"}, {"date": "25/06/2026", "product": "Prices", "qty": 1, "reason": "Expensive hai"}, {"date": "25/06/2026", "product": "Vegetables", "qty": 1, "reason": "Fresh nhi hai"}, {"date": "25/06/2026", "product": "Vegetables", "qty": 2, "reason": "Fresh nahi the"}], "bill": [{"date": "01/06/2026", "product": "Counters", "qty": 1, "reason": "Km hai"}], "maint": [{"date": "02/06/2026", "product": "Ac", "qty": 1, "reason": "Not working issue"}]}};
+window.__BAKED_FB_DATA__ = {"mpk": [{"rawDateValue": "2026-06-01", "date": "01/06/2026", "month": "06", "city": "MPK", "status": "Unuploaded"}, {"rawDateValue": "2026-06-02", "date": "02/06/2026", "month": "06", "city": "MPK", "status": "Uploaded"}, {"rawDateValue": "2026-06-03", "date": "03/06/2026", "month": "06", "city": "MPK", "status": "Uploaded"}, {"rawDateValue": "2026-06-04", "date": "04/06/2026", "month": "06", "city": "MPK", "status": "Uploaded"}, {"rawDateValue": "2026-06-05", "date": "05/06/2026", "month": "06", "city": "MPK", "status": "Unuploaded"}, {"rawDateValue": "2026-06-06", "date": "06/06/2026", "month": "06", "city": "MPK", "status": "Uploaded"}, {"rawDateValue": "2026-06-07", "date": "07/06/2026", "month": "06", "city": "MPK", "status": "Unuploaded"}, {"rawDateValue": "2026-06-08", "date": "08/06/2026", "month": "06", "city": "MPK", "status": "Uploaded"}, {"rawDateValue": "2026-06-09", "date": "09/06/2026", "month": "06", "city": "MPK", "status": "Unuploaded"}, {"rawDateValue": "2026-06-10", "date": "10/06/2026", "month": "06", "city": "MPK", "status": "Uploaded"}, {"rawDateValue": "2026-06-11", "date": "11/06/2026", "month": "06", "city": "MPK", "status": "Uploaded"}, {"rawDateValue": "2026-06-12", "date": "12/06/2026", "month": "06", "city": "MPK", "status": "Unuploaded"}, {"rawDateValue": "2026-06-13", "date": "13/06/2026", "month": "06", "city": "MPK", "status": "Unuploaded"}, {"rawDateValue": "2026-06-14", "date": "14/06/2026", "month": "06", "city": "MPK", "status": "Uploaded"}, {"rawDateValue": "2026-06-21", "date": "21/06/2026", "month": "06", "city": "MPK", "status": "Unuploaded"}], "hyd": []};
+/* ============================================================
+   DATA ENGINE
+   ============================================================ */
+const DATA = window.__BAKED_BRANCH_DATA__ || {};
+const FB_DATA = window.__BAKED_FB_DATA__ || {mpk:[],hyd:[]};
+let currentView = 'overview';
+let currentMonth = 'all';
+let activeDropdown = null;
+
+const CATS = [
+  { key:'fresho',   label:'Fresho',          icon:'leaf',          color:'#4d7c0f', bg:'#f1fde8' },
+  { key:'grocery',  label:'Grocery',         icon:'basket',        color:'#157a35', bg:'#e8fdf0' },
+  { key:'staff',    label:'Staff',           icon:'users',         color:'#c2540a', bg:'#fff4ed' },
+  { key:'cust',     label:'Customer Sat.',   icon:'heart',         color:'#be1865', bg:'#fff0f6' },
+  { key:'major',    label:'Major Complaints',icon:'alertTriangle', color:'#be123c', bg:'#fde8ec' },
+  { key:'maint',    label:'Maintenance',     icon:'wrench',        color:'#7a4d0e', bg:'#fdf3e8' },
+  { key:'bill',     label:'Billing',         icon:'receipt',       color:'#3730a3', bg:'#f0f0ff' },
+  { key:'price',    label:'Price Issues',    icon:'tag',           color:'#0369a1', bg:'#e8f4fd' },
+  { key:'demand',   label:'Demand/Stock',    icon:'box',           color:'#6d28d9', bg:'#f5f0ff' },
+  { key:'monthly',  label:'Monthly Total',   icon:'barChart',      color:'#0f7a4d', bg:'#e8fdf5' }
+];
+
+const BRANCH_VIEWS = [
+  { key:'overview', label:'Overview',         icon:'grid' },
+  { key:'tab1',      label:'Branch 1',         icon:'store' },
+  { key:'tab2',      label:'Branch 2',         icon:'store' },
+  { key:'tab3',      label:'Branch 3',         icon:'store' },
+  { key:'tab4',      label:'Branch 4',         icon:'store' },
+  { key:'facebook',  label:'Facebook Pages',   icon:'upload' }
+];
+
+const MONTHS = [
+  { key:'all', label:'All Time' },
+  { key:'01', label:'Jan' }, { key:'02', label:'Feb' }, { key:'03', label:'Mar' }, { key:'04', label:'Apr' },
+  { key:'05', label:'May' }, { key:'06', label:'Jun' }, { key:'07', label:'Jul' }, { key:'08', label:'Aug' },
+  { key:'09', label:'Sep' }, { key:'10', label:'Oct' }, { key:'11', label:'Nov' }, { key:'12', label:'Dec' }
+];
+
+function matchMonth(dateStr, month) {
+  if (month === 'all') return true;
+  if (!dateStr) return false;
+  const parts = dateStr.split('/');
+  return parts.length === 3 && parts[1] === month;
+}
+
+function getFilteredItems(branchKey, catKey) {
+  const store = DATA[branchKey] || {};
+  const items = store[catKey] || [];
+  return items.filter(e => matchMonth(e.date, currentMonth));
+}
+
+function totalQty(items) {
+  return items.reduce((s, e) => s + (e.qty || 0), 0);
+}
+
+function getBranchTotal(branchKey) {
+  const monthly = getFilteredItems(branchKey, 'monthly');
+  if (monthly.length) return totalQty(monthly);
+  let t = 0;
+  CATS.forEach(c => { if (c.key !== 'monthly') t += totalQty(getFilteredItems(branchKey, c.key)); });
+  return t;
+}
+
+/* -- RENDER -- */
+function render() {
+  const el = document.getElementById('mainContent');
+  el.classList.remove('fade-in');
+  void el.offsetWidth;
+  if (currentView === 'overview') el.innerHTML = renderOverview();
+  else if (currentView === 'facebook') el.innerHTML = renderFacebook();
+  else el.innerHTML = renderBranch(currentView);
+  el.classList.add('fade-in');
+  updateTimestamp();
+}
+
+function renderKpiRow(total, major, categories, days) {
+  return `<div class="kpi-row">
+    <div class="kpi-card"><div class="kpi-icon">${svgIcon('barChart')}</div><div class="kpi-val">${total}</div><div class="kpi-lbl">Total</div></div>
+    <div class="kpi-card red"><div class="kpi-icon">${svgIcon('alertTriangle')}</div><div class="kpi-val">${major}</div><div class="kpi-lbl">Major</div></div>
+    <div class="kpi-card amber"><div class="kpi-icon">${svgIcon('grid')}</div><div class="kpi-val">${categories}</div><div class="kpi-lbl">Categories</div></div>
+    <div class="kpi-card green"><div class="kpi-icon">${svgIcon('calendar')}</div><div class="kpi-val">${days}</div><div class="kpi-lbl">Days</div></div>
+  </div>`;
+}
+
+function renderAlertBanner(total, major) {
+  if (total === 0) return `<div class="alert-banner green"><div class="alert-icon">${svgIcon('checkCircle')}</div><div>Is period mein koi complaints nahi hain. Sab theek hai!</div></div>`;
+  if (major > 10) return `<div class="alert-banner red"><div class="alert-icon">${svgIcon('alertOctagon')}</div><div><b>High Alert:</b> ${major} Major complaints logged hain. Fori kaarwai zaruri hai.</div></div>`;
+  if (major > 5) return `<div class="alert-banner amber"><div class="alert-icon">${svgIcon('alertCircle')}</div><div><b>Monitor:</b> ${major} Major complaints hain. Closely track karen.</div></div>`;
+  return `<div class="alert-banner green"><div class="alert-icon">${svgIcon('checkCircle')}</div><div>Overall status theek hai. ${total} complaints logged, ${major} major.</div></div>`;
+}
+
+function renderCatCard(branchKey, cat, maxTotal) {
+  const items = getFilteredItems(branchKey, cat.key);
+  const qty = totalQty(items);
+  if (qty === 0) return '';
+  const pct = maxTotal > 0 ? Math.round((qty / maxTotal) * 100) : 0;
+  const sorted = [...items].sort((a,b) => (b.qty||0) - (a.qty||0));
+
+  const rows = sorted.map(e => `
+    <div class="complaint-row">
+      <div class="complaint-date">${e.date||'-'}</div>
+      <div class="complaint-info">
+        <div class="complaint-product">${e.product||'-'}</div>
+        ${e.reason ? `<div class="complaint-reason">${e.reason}</div>` : ''}
+      </div>
+      <div class="complaint-qty" style="color:${cat.color};">${e.qty||1}</div>
+    </div>`).join('');
+
+  return `<div class="cat-card" style="border-left-color:${cat.color};" onclick="toggleCat(this)">
+    <div class="cat-card-head">
+      <div class="cat-icon-name">
+        <div class="cat-icon" style="background:${cat.bg};color:${cat.color};">${svgIcon(cat.icon)}</div>
+        <div>
+          <div class="cat-name">${cat.label}</div>
+          <div class="cat-sub-row">
+            <span class="cat-sub">Tap to see details</span>
+            <span class="cat-chevron">${svgIcon('chevronDown')}</span>
+          </div>
+        </div>
+      </div>
+      <div class="cat-count-wrap">
+        <div class="cat-count" style="color:${cat.color};">${qty}</div>
+        <div class="cat-count-lbl">complaints</div>
+      </div>
+    </div>
+    <div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%;background:${cat.color};"></div></div>
+    <div class="cat-body">
+      <div class="complaint-list">${rows}</div>
+    </div>
+  </div>`;
+}
+
+function toggleCat(card) {
+  const body = card.querySelector('.cat-body');
+  if (!body) return;
+  const isOpen = card.classList.contains('expanded');
+  document.querySelectorAll('.cat-card.expanded').forEach(c => {
+    c.classList.remove('expanded');
+    const b = c.querySelector('.cat-body');
+    if (b) b.style.maxHeight = null;
+  });
+  if (!isOpen) {
+    card.classList.add('expanded');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  }
+}
+
+function renderBranch(branchKey) {
+  const bNum = branchKey.replace('tab','');
+  let grandTotal = 0;
+  let majorTotal = 0;
+  let activeCats = 0;
+  const daysSet = new Set();
+
+  CATS.forEach(cat => {
+    const items = getFilteredItems(branchKey, cat.key);
+    const q = totalQty(items);
+    if (q > 0) activeCats++;
+    if (cat.key === 'major') majorTotal = q;
+    if (cat.key === 'monthly') { grandTotal = q; items.forEach(e=>e.date&&daysSet.add(e.date)); }
+  });
+  if (!grandTotal) {
+    CATS.forEach(cat => {
+      if (cat.key !== 'monthly') {
+        const items = getFilteredItems(branchKey, cat.key);
+        grandTotal += totalQty(items);
+        items.forEach(e=>e.date&&daysSet.add(e.date));
+      }
+    });
+  }
+
+  let maxCat = 0;
+  CATS.forEach(cat => { maxCat = Math.max(maxCat, totalQty(getFilteredItems(branchKey, cat.key))); });
+
+  const cards = CATS.map(cat => renderCatCard(branchKey, cat, maxCat)).filter(Boolean).join('');
+
+  return `
+    ${renderKpiRow(grandTotal, majorTotal, activeCats, daysSet.size)}
+    ${renderAlertBanner(grandTotal, majorTotal)}
+    <div class="section-header">
+      <div class="section-title">Branch ${bNum} - Complaints</div>
+      <div class="section-count">${grandTotal} total</div>
+    </div>
+    <div class="cat-grid">${cards || `<div class="empty-state"><div class="big">${svgIcon('inbox')}</div>Is period mein koi complaints nahi hain.</div>`}</div>`;
+}
+
+function renderOverview() {
+  const branches = ['tab1','tab2','tab3','tab4'];
+  let chainTotal = 0, chainMajor = 0;
+
+  const branchCards = branches.map((bk, i) => {
+    const bNum = i + 1;
+    let bTotal = 0, bMajor = 0;
+    const catQtys = {};
+
+    CATS.forEach(cat => {
+      const q = totalQty(getFilteredItems(bk, cat.key));
+      catQtys[cat.key] = q;
+      if (cat.key === 'major') bMajor = q;
+      if (cat.key === 'monthly') bTotal = q;
+    });
+    if (!bTotal) CATS.forEach(cat => { if(cat.key!=='monthly') bTotal += catQtys[cat.key]||0; });
+
+    chainTotal += bTotal;
+    chainMajor += bMajor;
+
+    const badgeColor = bMajor > 10 ? '#be123c' : bMajor > 5 ? '#c2540a' : '#0f7a4d';
+    const badgeBg = bMajor > 10 ? '#fde8ec' : bMajor > 5 ? '#fff4ed' : '#e8fdf5';
+    const badgeIcon = bMajor > 10 ? 'alertOctagon' : bMajor > 5 ? 'alertCircle' : 'checkCircle';
+    const badgeTxt = bMajor > 10 ? 'High Alert' : bMajor > 5 ? 'Monitor' : 'Stable';
+
+    const topCats = CATS.filter(c => (catQtys[c.key]||0) > 0 && c.key !== 'monthly')
+      .sort((a,b) => (catQtys[b.key]||0) - (catQtys[a.key]||0))
+      .slice(0, 6);
+
+    const catCells = topCats.map(cat => `
+      <div class="ovb-cat">
+        <div class="ovb-cat-icon" style="color:${cat.color};">${svgIcon(cat.icon)}</div>
+        <div class="ovb-cat-val" style="color:${cat.color};">${catQtys[cat.key]||0}</div>
+        <div class="ovb-cat-lbl">${cat.label.split(' ')[0]}</div>
+      </div>`).join('');
+
+    return `<div class="overview-branch-card" style="border-top-color:${badgeColor};">
+      <div class="ovb-head">
+        <h3>${svgIcon('store')} Branch ${bNum}</h3>
+        <div>
+          <div class="ovb-total-badge" style="background:${badgeBg};color:${badgeColor};border:1.5px solid ${badgeColor};">
+            ${svgIcon(badgeIcon)} ${badgeTxt} - ${bTotal} complaints
+          </div>
+        </div>
+      </div>
+      <div class="ovb-cats">${catCells || `<div class="ovb-empty">No data for this period.</div>`}</div>
+    </div>`;
+  }).join('');
+
+  const chainBanner = renderAlertBanner(chainTotal, chainMajor);
+
+  return `
+    ${renderKpiRow(chainTotal, chainMajor, 4, '-')}
+    ${chainBanner}
+    <div class="section-header">
+      <div class="section-title">All Branches Summary</div>
+      <div class="section-count">4 branches</div>
+    </div>
+    ${branchCards}`;
+}
+
+function renderFacebook() {
+  const mpk = (FB_DATA.mpk || []).filter(d => matchMonth(d.date, currentMonth)).sort((a,b) => new Date(a.rawDateValue) - new Date(b.rawDateValue));
+  const hyd = (FB_DATA.hyd || []).filter(d => matchMonth(d.date, currentMonth)).sort((a,b) => new Date(a.rawDateValue) - new Date(b.rawDateValue));
+
+  const mpkUp = mpk.filter(d=>d.status==='Uploaded').length;
+  const mpkDn = mpk.filter(d=>d.status==='Unuploaded').length;
+  const hydUp = hyd.filter(d=>d.status==='Uploaded').length;
+  const hydDn = hyd.filter(d=>d.status==='Unuploaded').length;
+
+  const banner = (mpkDn + hydDn) > 0
+    ? `<div class="alert-banner amber"><div class="alert-icon">${svgIcon('alertCircle')}</div><div><b>${mpkDn+hydDn} entries unuploaded</b> hain - price list update pending hai.</div></div>`
+    : `<div class="alert-banner green"><div class="alert-icon">${svgIcon('checkCircle')}</div><div>Sab price lists upload ho gayi hain.</div></div>`;
+
+  function fbRows(list) {
+    if (!list.length) return `<div class="fb-empty">No data</div>`;
+    return list.map(d => {
+      const up = d.status === 'Uploaded';
+      return `<div class="fb-row"><span class="fb-date">${d.date}</span><span class="fb-badge ${up?'up':'down'}">${svgIcon(up?'check':'x')} ${d.status}</span></div>`;
+    }).join('');
+  }
+
+  return `
+    <div class="kpi-row">
+      <div class="kpi-card green"><div class="kpi-icon">${svgIcon('checkCircle')}</div><div class="kpi-val">${mpkUp}</div><div class="kpi-lbl">MPK Up</div></div>
+      <div class="kpi-card red"><div class="kpi-icon">${svgIcon('x')}</div><div class="kpi-val">${mpkDn}</div><div class="kpi-lbl">MPK Down</div></div>
+      <div class="kpi-card green"><div class="kpi-icon">${svgIcon('checkCircle')}</div><div class="kpi-val">${hydUp}</div><div class="kpi-lbl">HYD Up</div></div>
+      <div class="kpi-card red"><div class="kpi-icon">${svgIcon('x')}</div><div class="kpi-val">${hydDn}</div><div class="kpi-lbl">HYD Down</div></div>
+    </div>
+    ${banner}
+    <div class="fb-status-grid">
+      <div class="fb-card">
+        <h3>${svgIcon('upload')} MPK Page</h3>
+        ${fbRows(mpk)}
+      </div>
+      <div class="fb-card">
+        <h3>${svgIcon('upload')} HYD Page</h3>
+        ${fbRows(hyd)}
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   DROPDOWN CONTROLS (branch / month)
+   ============================================================ */
+function branchDropdownHTML() {
+  const items = BRANCH_VIEWS.map(v => `
+    <div class="dd-item ${currentView===v.key?'active':''}" onclick="selectBranch('${v.key}')">
+      <span class="dd-left"><span class="dd-icon">${svgIcon(v.icon)}</span><span>${v.label}</span></span>
+      <span class="dd-check">${svgIcon('check')}</span>
+    </div>`).join('');
+  return `<div class="dd-list">${items}</div>`;
+}
+
+function monthDropdownHTML() {
+  const items = MONTHS.map(m => {
+    const active = currentMonth === m.key;
+    if (m.key === 'all') {
+      return `<div class="dd-item full ${active?'active':''}" onclick="selectMonth('${m.key}')">
+        <span>${m.label}</span><span class="dd-check">${svgIcon('check')}</span>
+      </div>`;
+    }
+    return `<div class="dd-item ${active?'active':''}" onclick="selectMonth('${m.key}')"><span>${m.label}</span></div>`;
+  }).join('');
+  return `<div class="dd-grid">${items}</div>`;
+}
+
+function openDropdown(type) {
+  if (activeDropdown === type) { closeDropdown(); return; }
+  activeDropdown = type;
+  const panel = document.getElementById('ddPanel');
+  panel.innerHTML = type === 'branch' ? branchDropdownHTML() : monthDropdownHTML();
+  panel.classList.add('show');
+  document.getElementById('ddBackdrop').classList.add('show');
+  document.getElementById('branchBtn').classList.toggle('open', type === 'branch');
+  document.getElementById('monthBtn').classList.toggle('open', type === 'month');
+}
+
+function closeDropdown() {
+  activeDropdown = null;
+  document.getElementById('ddPanel').classList.remove('show');
+  document.getElementById('ddBackdrop').classList.remove('show');
+  document.getElementById('branchBtn').classList.remove('open');
+  document.getElementById('monthBtn').classList.remove('open');
+}
+
+function selectBranch(key) {
+  currentView = key;
+  syncControlLabels();
+  closeDropdown();
+  render();
+}
+
+function selectMonth(key) {
+  currentMonth = key;
+  syncControlLabels();
+  closeDropdown();
+  render();
+}
+
+function syncControlLabels() {
+  const bv = BRANCH_VIEWS.find(v => v.key === currentView);
+  document.getElementById('branchBtnLabel').textContent = bv ? bv.label : 'Overview';
+  const mv = MONTHS.find(m => m.key === currentMonth);
+  document.getElementById('monthBtnLabel').textContent = mv ? mv.label : 'All Time';
+}
+
+function updateTimestamp() {
+  const el = document.getElementById('lastUpdated');
+  if (el) el.textContent = 'Updated: ' + new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* -- BOOT -- */
+document.getElementById('iconRefresh').innerHTML = svgIcon('refresh');
+document.getElementById('iconBranchBtn').innerHTML = svgIcon('grid');
+document.getElementById('iconMonthBtn').innerHTML = svgIcon('calendar');
+document.getElementById('chevronBranch').innerHTML = svgIcon('chevronDown');
+document.getElementById('chevronMonth').innerHTML = svgIcon('chevronDown');
+syncControlLabels();
+render();
+</script>
+</body>
+</html>
